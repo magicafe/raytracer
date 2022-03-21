@@ -72,19 +72,6 @@ public:
 using point3 = vec3;
 using color = vec3;
 
-vec3 random_in_unit_sphere()
-{
-    while (true)
-    {
-        auto p = vec3::random(-1, 1);
-        if (p.length_squared() >= 1)
-        {
-            continue;
-        }
-        return p;
-    }
-}
-
 // Utility Functions
 inline std::ostream &operator<<(std::ostream &out, const vec3 &v)
 {
@@ -141,4 +128,22 @@ inline vec3 cross(const vec3 &u, const vec3 &v)
 inline vec3 unit_vector(vec3 v)
 {
     return v / v.length();
+}
+
+inline vec3 random_in_unit_sphere()
+{
+    while (true)
+    {
+        auto p = vec3::random(-1, 1);
+        if (p.length_squared() >= 1)
+        {
+            continue;
+        }
+        return p;
+    }
+}
+
+inline vec3 random_unit_vector()
+{
+    return unit_vector(random_in_unit_sphere());
 }

@@ -32,9 +32,9 @@ color ray_color(const ray &r, const hittable &world, int depth)
         return color::zero();
     }
 
-    if (world.hit(r, 0, infinity, rec))
+    if (world.hit(r, 0.001, infinity, rec))
     {
-        point3 target = rec.p + rec.normal + random_in_unit_sphere();
+        point3 target = rec.p + rec.normal + random_unit_vector();
         return 0.5 * ray_color(ray(rec.p, target - rec.p), world, depth - 1);
     }
     vec3 unit_direction = unit_vector(r.direction());
@@ -74,6 +74,7 @@ int main(int, char **)
     // World
     hittable_list world;
     world.add(make_shared<sphere>(point3(0, 0, -1), 0.5));
+    world.add(make_shared<sphere>(point3(1, 0, -1), 0.2));
     world.add(make_shared<sphere>(point3(0, -100.5, -1), 100));
 
     // Camera
