@@ -19,7 +19,9 @@ if ( _cpp_17_flag_supported )
 include(CTest)
 enable_testing()
 
-add_executable(Raytracer main.cpp vec3.h color.h ray.h headers.h sphere.h hittable.h hittable_list.h camera.h)
+set(include_directories(""))
+
+add_executable(Raytracer main.cpp)
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
