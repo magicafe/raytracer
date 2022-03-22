@@ -12,14 +12,15 @@
 #include "material/lambertian.h"
 #include "material/metal.h"
 #include "material/dielectric.h"
+#include "scene.h"
 
 using namespace std::chrono_literals;
 
 // Image
-const double ASPECT_RATIO = 16.0 / 9.0;
-const int IMAGE_WIDTH = 1920;
+const double ASPECT_RATIO = 3.0 / 2.0;
+const int IMAGE_WIDTH = 1200;
 const int IMAGE_HEIGHT = static_cast<int>(IMAGE_WIDTH / ASPECT_RATIO);
-const int SAMPLES_PER_PIXEL = 100;
+const int SAMPLES_PER_PIXEL = 500;
 const int MAX_DEPTH = 50;
 
 std::atomic<int> progress{0};
@@ -80,21 +81,15 @@ void scan_vertical(std::vector<rgb> &colors, int start, int end, const camera &c
 int main(int, char **)
 {
     // World
-    auto material_ground = make_shared<lambertian>(color(0.8, 0.8, 0.0));
-    auto material_center = make_shared<lambertian>(color(0.1, 0.2, 0.5));
-    auto material_left = make_shared<dielectric>(1.5);
-    auto material_right = make_shared<metal>(color(0.8, 0.6, 0.2), 0.0);
-
-    auto R = cos(pi / 4);
-    hittable_list world;
-    world.add(make_shared<sphere>(point3(0.0, -100.5, -1.0), 100.0, material_ground));
-    world.add(make_shared<sphere>(point3(0.0, 0.0, -1.0), 0.5, material_center));
-    world.add(make_shared<sphere>(point3(-1.0, 0.0, -1.0), 0.5, material_left));
-    world.add(make_shared<sphere>(point3(-1.0, 0.0, -1.0), -0.45, material_left));
-    world.add(make_shared<sphere>(point3(1.0, 0.0, -1.0), 0.5, material_right));
-
+    auto world = random_scene();
+ 
     // Camera
-    camera camera(point3(-2, 2, 1), point3(0, 0, -1), vec3(0, 1, 0), 90, ASPECT_RATIO);
+    point3 lookfrom(13, 2, 3);
+    point3 lookat(0, 0, 0);
+    vec3 vup(0, 1, 0);
+    auto dist_to_focus = 10;
+    auto aperture = 0.1;
+    camera camera(lookfrom, lookat, vup, 20, ASPECT_RATIO, aperture, dist_to_focus);
 
     int thread_count = std::thread::hardware_concurrency();
     std::vector<std::thread> threads;
