@@ -1,27 +1,38 @@
 cmake_minimum_required(VERSION 3.0.0)
 project(Raytracer VERSION 0.1.0)
 
-if ( CMAKE_SYSTEM_NAME MATCHES "Windows" )
-    set( my_std_pre "/std:" )
-else()
-    set( my_std_pre "-std=" )
-endif()
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
-set( basic_cxx17 "c++17" )
-set( str_cxx17 "${my_std_pre}${basic_cxx17}" )
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-include( CheckCXXCompilerFlag )
-check_cxx_compiler_flag( "${str_cxx17}" _cpp_17_flag_supported )
-if ( _cpp_17_flag_supported )
-    set( CMAKE_CXX_STANDARD 17 )
- endif()
+# detect apple silicon
+set(APPLE_SILICON false)
+if(RAY_PLATFORM_MAC)
+    if(${CMAKE_OSX_ARCHITECTURES} STREQUAL "arm64")
+        set(APPLE_SILICON true)
+    endif()
+    
+    if(APPLE_SILICON)
+        message(STATUS "Building for Apple Silicon Mac.")
+    else()
+        message(STATUS "Building for Intel Mac.")
+    endif(APPLE_SILICON)
+endif(RAY_PLATFORM_MAC)
 
-include(CTest)
-enable_testing()
+set( DEFUALT_BULID_TYPE "Release")
 
-set(include_directories(""))
+include_directories( "${Raytracer_SOURCE_DIR}/src" )
 
-add_executable(Raytracer main.cpp)
+file(GLOB_RECURSE project_headers src/*.h src/*.hpp)
+file(GLOB_RECURSE project_cpps src/*.cpp)
+file(GLOB_RECURSE project_cs src/*.c)
+file(GLOB_RECURSE project_ccs src/*.cc)
+
+set(all_files ${project_headers} ${project_cpps} ${project_cs} ${project_ccs})
+
+add_executable(Raytracer ${all_files})
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
