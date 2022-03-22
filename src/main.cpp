@@ -78,6 +78,8 @@ void scan_vertical(std::vector<rgb> &colors, int start, int end, const camera &c
     }
 }
 
+#include <Eigen/Dense>
+
 int main(int, char **)
 {
     // World
@@ -90,6 +92,8 @@ int main(int, char **)
     auto dist_to_focus = 10;
     auto aperture = 0.1;
     camera camera(lookfrom, lookat, vup, 20, ASPECT_RATIO, aperture, dist_to_focus);
+
+    auto start_time = std::chrono::high_resolution_clock::now();
 
     int thread_count = std::thread::hardware_concurrency();
     std::vector<std::thread> threads;
@@ -107,13 +111,13 @@ int main(int, char **)
 
     for (int i = 0; i < thread_count; ++i)
     {
-        threads.push_back(std::thread(scan_vertical, std::ref(final_colors[i]), start, end, std::ref(camera), std::ref(world)));
-        start = end - 1;
+        start = IMAGE_HEIGHT - 1 - vertical_step * i;
         end = start - vertical_step;
-        if (end < 0)
+        if (i == thread_count - 1)
         {
             end = 0;
         }
+        threads.push_back(std::thread(scan_vertical, std::ref(final_colors[i]), start, end, std::ref(camera), std::ref(world)));
     }
 
     while (runningThreadCount != thread_count)
@@ -147,4 +151,8 @@ int main(int, char **)
         }
     }
     std::cerr << "\nDone.\n";
+
+    auto end_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> diff = end_time - start_time;
+    std::cerr << "Pantry time: " << diff.count() << std::endl;
 }

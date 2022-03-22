@@ -30,6 +30,8 @@ file(GLOB_RECURSE project_cpps src/*.cpp)
 file(GLOB_RECURSE project_cs src/*.c)
 file(GLOB_RECURSE project_ccs src/*.cc)
 
+include_directories("${Raytracer_SOURCE_DIR}/src/3rd/include/eigen3")
+
 set(all_files ${project_headers} ${project_cpps} ${project_cs} ${project_ccs})
 
 add_executable(Raytracer ${all_files})
