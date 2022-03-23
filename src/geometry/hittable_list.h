@@ -20,10 +20,33 @@ public:
     void clear() { objects.clear(); }
 
     virtual bool hit(const ray &r, double t_min, double t_max, hit_record &rec) const override;
+
+    virtual bool bounding_box(double time0, double time1, aabb &output_box) const override
+    {
+        if (objects.empty())
+        {
+            return false;
+        }
+
+        aabb temp_box;
+        bool fisrt_box = true;
+
+        for (auto &object : objects)
+        {
+            if (!object->bounding_box(time0, time1, temp_box))
+            {
+                return false;
+            }
+
+            output_box = fisrt_box ? temp_box : surrounding_box(output_box, temp_box);
+            fisrt_box = false;
+        }
+
+        return true;
+    }
 };
 
-bool
-hittable_list::hit(const ray &r, double t_min, double t_max, hit_record &rec) const
+bool hittable_list::hit(const ray &r, double t_min, double t_max, hit_record &rec) const
 {
     hit_record temp_rec;
     bool hit_anything = false;
