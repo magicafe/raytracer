@@ -13,15 +13,16 @@
 #include "material/metal.h"
 #include "material/dielectric.h"
 #include "scene.h"
+#include "cmd/cmd_opts.h"
 
 using namespace std::chrono_literals;
 
 // Image
 const double ASPECT_RATIO = 3.0 / 2.0;
-const int IMAGE_WIDTH = 1200;
-const int IMAGE_HEIGHT = static_cast<int>(IMAGE_WIDTH / ASPECT_RATIO);
 const int SAMPLES_PER_PIXEL = 500;
 const int MAX_DEPTH = 50;
+int image_width = 1200;
+int image_height = static_cast<int>(image_width / ASPECT_RATIO);
 
 std::atomic<int> progress{0};
 std::mutex m1;
@@ -61,13 +62,13 @@ void scan_vertical(std::vector<rgb> &colors, int start, int end, const camera &c
     for (int j = start; j >= end; --j)
     {
         // std::cerr << "Scanlines remaining: " << j - end << ' ' << std::flush;
-        for (int i = 0; i < IMAGE_WIDTH; ++i)
+        for (int i = 0; i < image_width; ++i)
         {
             color pixel_color(0, 0, 0);
             for (int s = 0; s < SAMPLES_PER_PIXEL; ++s)
             {
-                auto u = (i + random_double()) / (IMAGE_WIDTH - 1);
-                auto v = (j + random_double()) / (IMAGE_HEIGHT - 1);
+                auto u = (i + random_double()) / (image_width - 1);
+                auto v = (j + random_double()) / (image_height - 1);
                 ray r = camera.get_ray(u, v);
                 pixel_color += ray_color(r, world, MAX_DEPTH);
             }
@@ -80,17 +81,57 @@ void scan_vertical(std::vector<rgb> &colors, int start, int end, const camera &c
 
 #include <Eigen/Dense>
 
-int main(int, char **)
+int main(int argc, const char *argv[])
 {
+    struct options
+    {
+        string scene_name{"scene"};
+        int image_width{1920};
+        string image_output{"image"};
+    };
+
+    auto parser = cmd_opts<options>::create(
+        {{"-scene", &options::scene_name},
+         {"-width", &options::image_width},
+         {"-image", &options::image_output}});
+
+    auto configs = parser->parse(argc, argv);
+    image_width = configs.image_width;
+    image_height = static_cast<int>(image_width / ASPECT_RATIO);
+
     // World
-    auto world = random_scene();
- 
+    point3 lookfrom;
+    point3 lookat;
+    auto vfov = 40.0;
+    auto aperture = 0.0;
+
+    bvh_node world;
+    if (configs.scene_name.compare("spheres") == 0)
+    {
+        world = two_spheres();
+        lookfrom = point3(13, 2, 3);
+        lookat = point3(0, 0, 0);
+        vfov = 20.0;
+    }
+    else if (configs.scene_name.compare("perlin_spheres") == 0)
+    {
+        world = two_perlin_spheres();
+        lookfrom = point3(13, 2, 3);
+        lookat = point3(0, 0, 0);
+        vfov = 20.0;
+    }
+    else
+    {
+        world = random_scene();
+        lookfrom = point3(13, 2, 3);
+        lookat = point3(0, 0, 0);
+        vfov = 20.0;
+        aperture = 0.1;
+    }
+
     // Camera
-    point3 lookfrom(13, 2, 3);
-    point3 lookat(0, 0, 0);
     vec3 vup(0, 1, 0);
     auto dist_to_focus = 10;
-    auto aperture = 0.1;
     camera camera(lookfrom, lookat, vup, 20, ASPECT_RATIO, aperture, dist_to_focus, 0, 1);
 
     auto start_time = std::chrono::high_resolution_clock::now();
@@ -103,15 +144,15 @@ int main(int, char **)
         final_colors.push_back(std::vector<rgb>());
     }
 
-    progress = IMAGE_HEIGHT;
+    progress = image_height;
 
-    int vertical_step = IMAGE_HEIGHT / thread_count;
-    int start = IMAGE_HEIGHT - 1;
+    int vertical_step = image_height / thread_count;
+    int start = image_height - 1;
     int end = start - vertical_step;
 
     for (int i = 0; i < thread_count; ++i)
     {
-        start = IMAGE_HEIGHT - 1 - vertical_step * i;
+        start = image_height - 1 - vertical_step * i;
         end = start - vertical_step;
         if (i == thread_count - 1)
         {
@@ -142,7 +183,7 @@ int main(int, char **)
 
     // Render
     std::cout << "P3\n"
-              << IMAGE_WIDTH << " " << IMAGE_HEIGHT << "\n255\n";
+              << image_width << " " << image_height << "\n255\n";
     for (auto &colors : final_colors)
     {
         for (auto &color : colors)
