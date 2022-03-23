@@ -91,7 +91,7 @@ int main(int, char **)
     vec3 vup(0, 1, 0);
     auto dist_to_focus = 10;
     auto aperture = 0.1;
-    camera camera(lookfrom, lookat, vup, 20, ASPECT_RATIO, aperture, dist_to_focus);
+    camera camera(lookfrom, lookat, vup, 20, ASPECT_RATIO, aperture, dist_to_focus, 0, 1);
 
     auto start_time = std::chrono::high_resolution_clock::now();
 
@@ -154,5 +154,5 @@ int main(int, char **)
 
     auto end_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> diff = end_time - start_time;
-    std::cerr << "Pantry time: " << diff.count() << std::endl;
+    std::cerr << "Pantry time: " << diff.count() << "s" << std::endl;
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "headers.h"
+#include "geometry/moving_sphere.h"
 
 hittable_list random_scene() {
     hittable_list world;
@@ -20,7 +21,8 @@ hittable_list random_scene() {
                     // diffuse
                     auto albedo = color::random() * color::random();
                     sphere_material = make_shared<lambertian>(albedo);
-                    world.add(make_shared<sphere>(center, 0.2, sphere_material));
+                    auto center2 = center + vec3(0, random_double(0, 0.5), 0);
+                    world.add(make_shared<moving_sphere>(center, center2, 0, 1, 0.2, sphere_material));
                 } else if (choose_mat < 0.95) {
                     // metal
                     auto albedo = color::random(0.5, 1);
