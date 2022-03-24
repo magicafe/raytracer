@@ -16,6 +16,6 @@ public:
 
     virtual color value(double u, double v, const point3 &p) const override
     {
-        return color::identity() * noise.noise(p);
+        return color::identity() * 0.5 * (1 + sin(scale*p.z() + 10*noise.turb(p)));
     }
 };

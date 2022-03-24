@@ -5,6 +5,7 @@
 #include "bvh_node.h"
 #include "texture/checker_texture.h"
 #include "texture/noise_texture.h"
+#include "texture/image_texture.h"
 
 bvh_node random_scene()
 {
@@ -87,5 +88,15 @@ bvh_node two_perlin_spheres()
     objects.add(make_shared<sphere>(point3(0, 2, 0), 2, make_shared<lambertian>(pertext)));
 
     bvh_node world(objects, 0, 1);
+    return world;
+}
+
+bvh_node earth()
+{
+    auto earth_texture = make_shared<image_texture>("../assets/earthmap.jpeg");
+    auto earth_surface = make_shared<lambertian>(earth_texture);
+    auto globe = make_shared<sphere>(point3(0, 0, 0), 2, earth_surface);
+
+    bvh_node world(hittable_list(globe), 0, 1);
     return world;
 }

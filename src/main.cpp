@@ -28,7 +28,7 @@ std::atomic<int> progress{0};
 std::mutex m1;
 std::atomic<int> runningThreadCount{0};
 
-color ray_color(const ray &r, const hittable &world, int depth)
+color ray_color(const ray &r, const color &background, const hittable &world, int depth)
 {
     hit_record rec;
 
@@ -37,23 +37,23 @@ color ray_color(const ray &r, const hittable &world, int depth)
         return color::zero();
     }
 
-    if (world.hit(r, 0.001, infinity, rec))
+    if (!world.hit(r, 0.001, infinity, rec))
     {
-        ray scattered;
-        color attenuation;
-        if (rec.mat_ptr->scatter(r, rec, attenuation, scattered))
-        {
-            return attenuation * ray_color(scattered, world, depth - 1);
-        }
-        return color::zero();
+        return background;
     }
-    vec3 unit_direction = unit_vector(r.direction());
-    auto t = 0.5 * (unit_direction.y() + 1.0);
-    return (1.0 - t) * color::identity() + t * color(0.5, 0.7, 1.0);
+    ray scattered;
+    color attenuation;
+    color emitted = rec.mat_ptr->emitted(rec.u, rec.v, rec.p);
+
+    if (!rec.mat_ptr->scatter(r, rec, attenuation, scattered))
+    {
+        return emitted;
+    }
+    return emitted + attenuation * ray_color(scattered, background, world, depth - 1);
 }
 
 // [start, end]
-void scan_vertical(std::vector<rgb> &colors, int start, int end, const camera &camera, const hittable &world)
+void scan_vertical(std::vector<rgb> &colors, int start, int end, const color& background, const camera &camera, const hittable &world)
 {
     m1.lock();
     std::cerr << "Scan from " << start << " to " << end << "\n";
@@ -70,7 +70,7 @@ void scan_vertical(std::vector<rgb> &colors, int start, int end, const camera &c
                 auto u = (i + random_double()) / (image_width - 1);
                 auto v = (j + random_double()) / (image_height - 1);
                 ray r = camera.get_ray(u, v);
-                pixel_color += ray_color(r, world, MAX_DEPTH);
+                pixel_color += ray_color(r, background, world, MAX_DEPTH);
             }
 
             write_color(colors, pixel_color, SAMPLES_PER_PIXEL);
@@ -104,11 +104,13 @@ int main(int argc, const char *argv[])
     point3 lookat;
     auto vfov = 40.0;
     auto aperture = 0.0;
+    color background(0, 0, 0);
 
     bvh_node world;
     if (configs.scene_name.compare("spheres") == 0)
     {
         world = two_spheres();
+        background = color(0.70, 0.80, 1.00);
         lookfrom = point3(13, 2, 3);
         lookat = point3(0, 0, 0);
         vfov = 20.0;
@@ -116,6 +118,15 @@ int main(int argc, const char *argv[])
     else if (configs.scene_name.compare("perlin_spheres") == 0)
     {
         world = two_perlin_spheres();
+        background = color(0.70, 0.80, 1.00);
+        lookfrom = point3(13, 2, 3);
+        lookat = point3(0, 0, 0);
+        vfov = 20.0;
+    }
+    else if (configs.scene_name.compare("earth") == 0)
+    {
+        world = earth();
+        background = color(0.70, 0.80, 1.00);
         lookfrom = point3(13, 2, 3);
         lookat = point3(0, 0, 0);
         vfov = 20.0;
@@ -123,6 +134,7 @@ int main(int argc, const char *argv[])
     else
     {
         world = random_scene();
+        background = color(0.70, 0.80, 1.00);
         lookfrom = point3(13, 2, 3);
         lookat = point3(0, 0, 0);
         vfov = 20.0;
@@ -158,7 +170,7 @@ int main(int argc, const char *argv[])
         {
             end = 0;
         }
-        threads.push_back(std::thread(scan_vertical, std::ref(final_colors[i]), start, end, std::ref(camera), std::ref(world)));
+        threads.push_back(std::thread(scan_vertical, std::ref(final_colors[i]), start, end, std::ref(background), std::ref(camera), std::ref(world)));
     }
 
     while (runningThreadCount != thread_count)
