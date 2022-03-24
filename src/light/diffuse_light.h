@@ -11,7 +11,7 @@ public:
     shared_ptr<texture> emit;
 
 public:
-    diffuse_light(shared_ptr<textture> tex) : emit(tex) {}
+    diffuse_light(shared_ptr<texture> tex) : emit(tex) {}
     diffuse_light(color c) : emit(make_shared<solid_color>(c)) {}
 
     virtual bool scatter(const ray &r_in, const hit_record &rec, color &attenuation, ray &scattered) const override
@@ -23,4 +23,4 @@ public:
     {
         return emit->value(u, v, p);
     }
-}
+};

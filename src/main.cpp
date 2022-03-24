@@ -18,11 +18,11 @@
 using namespace std::chrono_literals;
 
 // Image
-const double ASPECT_RATIO = 3.0 / 2.0;
+double aspect_ratio = 3.0 / 2.0;
 const int SAMPLES_PER_PIXEL = 500;
 const int MAX_DEPTH = 50;
 int image_width = 1200;
-int image_height = static_cast<int>(image_width / ASPECT_RATIO);
+int image_height = static_cast<int>(image_width / aspect_ratio);
 
 std::atomic<int> progress{0};
 std::mutex m1;
@@ -53,7 +53,7 @@ color ray_color(const ray &r, const color &background, const hittable &world, in
 }
 
 // [start, end]
-void scan_vertical(std::vector<rgb> &colors, int start, int end, const color& background, const camera &camera, const hittable &world)
+void scan_vertical(std::vector<rgb> &colors, int start, int end, const color &background, const camera &camera, const hittable &world)
 {
     m1.lock();
     std::cerr << "Scan from " << start << " to " << end << "\n";
@@ -97,7 +97,7 @@ int main(int argc, const char *argv[])
 
     auto configs = parser->parse(argc, argv);
     image_width = configs.image_width;
-    image_height = static_cast<int>(image_width / ASPECT_RATIO);
+    image_height = static_cast<int>(image_width / aspect_ratio);
 
     // World
     point3 lookfrom;
@@ -131,6 +131,25 @@ int main(int argc, const char *argv[])
         lookat = point3(0, 0, 0);
         vfov = 20.0;
     }
+    else if (configs.scene_name.compare("simple_light") == 0)
+    {
+        world = simple_light();
+        background = color(0, 0, 0);
+        lookfrom = point3(26, 3, 6);
+        lookat = point3(0, 2, 0);
+        vfov = 20.0;
+    }
+    else if (configs.scene_name.compare("cornell") == 0)
+    {
+        world = cornell_box();
+        aspect_ratio = 1.0;
+        image_width = 600;
+        image_height = static_cast<int>(image_width / aspect_ratio);
+        background = color(0, 0, 0);
+        lookfrom = point3(278, 278, -800);
+        lookat = point3(278, 278, 0);
+        vfov = 40.0;
+    }
     else
     {
         world = random_scene();
@@ -144,7 +163,7 @@ int main(int argc, const char *argv[])
     // Camera
     vec3 vup(0, 1, 0);
     auto dist_to_focus = 10;
-    camera camera(lookfrom, lookat, vup, 20, ASPECT_RATIO, aperture, dist_to_focus, 0, 1);
+    camera camera(lookfrom, lookat, vup, vfov, aspect_ratio, aperture, dist_to_focus, 0, 1);
 
     auto start_time = std::chrono::high_resolution_clock::now();
 

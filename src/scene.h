@@ -2,10 +2,15 @@
 
 #include "headers.h"
 #include "geometry/moving_sphere.h"
+#include "geometry/aarect.h"
+#include "geometry/box.h"
+#include "geometry/translate.h"
+#include "geometry/rotate_y.h"
 #include "bvh_node.h"
 #include "texture/checker_texture.h"
 #include "texture/noise_texture.h"
 #include "texture/image_texture.h"
+#include "light/diffuse_light.h"
 
 bvh_node random_scene()
 {
@@ -98,5 +103,50 @@ bvh_node earth()
     auto globe = make_shared<sphere>(point3(0, 0, 0), 2, earth_surface);
 
     bvh_node world(hittable_list(globe), 0, 1);
+    return world;
+}
+
+bvh_node simple_light()
+{
+    hittable_list objects;
+
+    auto pertext = make_shared<noise_texture>(4);
+    objects.add(make_shared<sphere>(point3(0, -1000, 0), 1000, make_shared<lambertian>(pertext)));
+    objects.add(make_shared<sphere>(point3(0, 2, 0), 2, make_shared<lambertian>(pertext)));
+
+    auto difflight = make_shared<diffuse_light>(color(4, 4, 4));
+    objects.add(make_shared<xy_rect>(3, 5, 1, 3, -2, difflight));
+
+    bvh_node world(objects, 0, 1);
+    return world;
+}
+
+bvh_node cornell_box()
+{
+    hittable_list objects;
+
+    auto red = make_shared<lambertian>(color(.65, .05, .05));
+    auto white = make_shared<lambertian>(color(.73, .73, .73));
+    auto green = make_shared<lambertian>(color(.12, .45, .15));
+    auto light = make_shared<diffuse_light>(color(15, 15, 15));
+
+    objects.add(make_shared<yz_rect>(0, 555, 0, 555, 555, green));
+    objects.add(make_shared<yz_rect>(0, 555, 0, 555, 0, red));
+    objects.add(make_shared<xz_rect>(213, 343, 227, 332, 554, light));
+    objects.add(make_shared<xz_rect>(0, 555, 0, 555, 0, white));
+    objects.add(make_shared<xz_rect>(0, 555, 0, 555, 555, white));
+    objects.add(make_shared<xy_rect>(0, 555, 0, 555, 555, white));
+
+    shared_ptr<hittable> box1 = make_shared<box>(point3(0, 0, 0), point3(165, 330, 165), white);
+    box1 = make_shared<rotate_y>(box1, 15);
+    box1 = make_shared<translate>(box1, vec3(265, 0, 295));
+    objects.add(box1);
+
+    shared_ptr<hittable> box2 = make_shared<box>(point3(0, 0, 0), point3(165, 165, 165), white);
+    box2 = make_shared<rotate_y>(box2, -18);
+    box2 = make_shared<translate>(box2, vec3(130, 0, 65));
+    objects.add(box2);
+
+    bvh_node world(objects, 0, 1);
     return world;
 }
