@@ -19,7 +19,7 @@ using namespace std::chrono_literals;
 
 // Image
 double aspect_ratio = 3.0 / 2.0;
-const int SAMPLES_PER_PIXEL = 500;
+int samples_per_pixel = 500;
 const int MAX_DEPTH = 50;
 int image_width = 1200;
 int image_height = static_cast<int>(image_width / aspect_ratio);
@@ -65,7 +65,7 @@ void scan_vertical(std::vector<rgb> &colors, int start, int end, const color &ba
         for (int i = 0; i < image_width; ++i)
         {
             color pixel_color(0, 0, 0);
-            for (int s = 0; s < SAMPLES_PER_PIXEL; ++s)
+            for (int s = 0; s < samples_per_pixel; ++s)
             {
                 auto u = (i + random_double()) / (image_width - 1);
                 auto v = (j + random_double()) / (image_height - 1);
@@ -73,7 +73,7 @@ void scan_vertical(std::vector<rgb> &colors, int start, int end, const color &ba
                 pixel_color += ray_color(r, background, world, MAX_DEPTH);
             }
 
-            write_color(colors, pixel_color, SAMPLES_PER_PIXEL);
+            write_color(colors, pixel_color, samples_per_pixel);
         }
         progress--;
     }
@@ -147,6 +147,28 @@ int main(int argc, const char *argv[])
         image_height = static_cast<int>(image_width / aspect_ratio);
         background = color(0, 0, 0);
         lookfrom = point3(278, 278, -800);
+        lookat = point3(278, 278, 0);
+        vfov = 40.0;
+    }
+    else if (configs.scene_name.compare("cornell_smoke") == 0)
+    {
+        world = cornell_smoke();
+        aspect_ratio = 1.0;
+        image_width = 600;
+        image_height = static_cast<int>(image_width / aspect_ratio);
+        lookfrom = point3(278, 278, -800);
+        lookat = point3(278, 278, 0);
+        vfov = 40.0;
+    }
+    else if (configs.scene_name.compare("final") == 0)
+    {
+        world = final_scene();
+        aspect_ratio = 1.0;
+        image_width = 2000;
+        image_height = static_cast<int>(image_width / aspect_ratio);
+        samples_per_pixel = 1000;
+        background = color(0, 0, 0);
+        lookfrom = point3(478, 278, -600);
         lookat = point3(278, 278, 0);
         vfov = 40.0;
     }
